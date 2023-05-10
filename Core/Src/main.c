@@ -48,13 +48,13 @@ uint8_t TxBuffer[40];
 
 uint8_t Start_Menu [500] =
 
-		"			( >_______________________________< )           \r\n"
-		"			Welcome to start menu of this program			\r\n"
-		"		You can only select one choice from the menu have   \r\n"
-		"		Quickly to Select command to go to next menu		\r\n"
+		"	( >_______________________________< )           \r\n"
+		"	Welcome to start menu of this program			\r\n"
+		" You can only select one choice from the menu have   \r\n"
+		" Quickly to Select command to go to next menu		\r\n"
 		"___________________________________________________________\r\n"
-		"					0 = LED CONTROL							\r\n"
-		"					1 = BUTTON STATUS						\r\n";
+		"			0 = LED CONTROL							\r\n"
+		"			1 = BUTTON STATUS						\r\n";
 uint8_t LED_Menu[700] =
 			"===================================================== \r\n"
 			"               Welcome to LED CONTROL	               \r\n"
@@ -183,7 +183,7 @@ int main(void)
 
 	  case 0: // First Menu
 		  HAL_Delay(5); // delay = 5 ms.
-		  HAL_UART_Transmit_IT(&huart2, FirstMenu, strlen((char*) FirstMenu));
+		  HAL_UART_Transmit_IT(&huart2, Start_Menu, strlen((char*) Start_Menu));
 
 		  State = 1;
 		  break;
@@ -206,7 +206,7 @@ int main(void)
 
 	  case 2: // Second Menu
 		  HAL_Delay(5); // delay = 5 ms.
-		  HAL_UART_Transmit_IT(&huart2, SecMenu, strlen((char*) SecMenu));
+		  HAL_UART_Transmit_IT(&huart2, LED_Menu, strlen((char*) LED_Menu));
 
 		  State = 3;
 		  break;
@@ -275,7 +275,7 @@ int main(void)
 
 	  case 4:
 		  HAL_Delay(5);
-		  HAL_UART_Transmit_IT(&huart2, ThirdMenu, strlen((char*) ThirdMenu));
+		  HAL_UART_Transmit_IT(&huart2, BUTTON_Menu, strlen((char*) BUTTON_Menu));
 		  State = 5;
 		  break;
 
