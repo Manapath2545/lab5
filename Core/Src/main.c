@@ -48,14 +48,51 @@ uint8_t TxBuffer[40];
 
 uint8_t Start_Menu [500] =
 
-		"			( >_______________________________< )           \n"
-		"			Welcome to start menu of this program			\n"
-		"		You can only select one choice from the menu have   \n"
-		"		Quickly to Select command to go to next menu		\n"
-		"___________________________________________________________\n"
-		"					0 = LED CONTROL							\n"
-		"					1 = VELOCITY CONTROL					\n";
+		"			( >_______________________________< )           \r\n"
+		"			Welcome to start menu of this program			\r\n"
+		"		You can only select one choice from the menu have   \r\n"
+		"		Quickly to Select command to go to next menu		\r\n"
+		"___________________________________________________________\r\n"
+		"					0 = LED CONTROL							\r\n"
+		"					1 = BUTTON STATUS						\r\n";
+uint8_t LED_Menu[700] =
+			"===================================================== \r\n"
+			"               Welcome to LED CONTROL	               \r\n"
+			" You can only select one choice from the menu have    \r\n"
+			"             Press the Character of choice            \r\n"
+			"===================================================== \r\n"
+			"                a : Speed Up   +1 Hz                  \r\n"
+			"                s : Speed Down -1 Hz                  \r\n"
+			"                d : On / Off LED                      \r\n"
+			"                x : Previous menus                    \r\n"
+			"===================================================== \r\n";
 
+uint8_t BUTTON_Menu[300] =
+			"===================================================== \r\n"
+			"              Welcome to BUTTON STATUS                \r\n"
+			"       This Menu will show button status B1           \r\n"
+			"         Press 'x' to get to previous menu            \r\n"
+			"===================================================== \r\n";
+//set
+int8_t Hz = 0;
+int8_t Past_Hz = 0;
+uint8_t mHz = 0;
+
+uint8_t State = 0;
+uint8_t Status_LED = 0;
+uint8_t LED_On [10] = "LedOn\r\n";
+uint8_t LED_Off [15] = "LedOff\r\n";
+
+uint8_t Error[20] = "Error Option\r\n";
+
+uint8_t Button = 0;
+uint8_t PastButton = 0;
+
+uint8_t Press[20] = "ButtonPressed\r\n";
+uint8_t UnPress[20] = "ButtonUnpressed\r\n";
+uint8_t OnePress = 0;
+
+uint16_t box[30];
 
 
 /* USER CODE END PV */
@@ -65,6 +102,8 @@ void SystemClock_Config(void);
 static void MX_GPIO_Init(void);
 static void MX_USART2_UART_Init(void);
 /* USER CODE BEGIN PFP */
+
+void UARTInterruptConfig();
 
 /* USER CODE END PFP */
 
@@ -104,6 +143,8 @@ int main(void)
   MX_USART2_UART_Init();
   /* USER CODE BEGIN 2 */
 
+  UARTInterruptConfig();
+
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -113,6 +154,156 @@ int main(void)
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
+	  static uint32_t timestamp = 0;
+	  if (HAL_GetTick() > timestamp)
+	  {
+
+			if (Hz > 0)
+			{
+				mHz = 500 / Hz;
+			}
+			else
+			{
+				mHz = 0;
+			}
+			timestamp = HAL_GetTick() + mHz;
+
+			if(Status_LED == 0 || Hz == 0)
+			{
+				HAL_GPIO_WritePin(LD2_GPIO_Port, LD2_Pin, RESET);
+			}
+			else
+			{
+				HAL_GPIO_TogglePin(LD2_GPIO_Port, LD2_Pin);
+			}
+		}
+
+	  // create State
+	  switch (State){
+
+	  case 0: // First Menu
+		  HAL_Delay(5); // delay = 5 ms.
+		  HAL_UART_Transmit_IT(&huart2, FirstMenu, strlen((char*) FirstMenu));
+
+		  State = 1;
+		  break;
+
+	  case 1: // Press 1 or 0
+	  	  if (RxBuffer[0] == '0') // Press and go to LED Control
+	  	  {
+	  		  RxBuffer[0] = 0;
+
+	  		  State = 2;
+	  	  }
+
+	  	  else if (RxBuffer[0] == '1')  // Press and go to Button Status
+	  	  {
+	  		  RxBuffer[0] = 0;
+
+	  		  State = 4;
+	  	  }
+	  	  break;
+
+	  case 2: // Second Menu
+		  HAL_Delay(5); // delay = 5 ms.
+		  HAL_UART_Transmit_IT(&huart2, SecMenu, strlen((char*) SecMenu));
+
+		  State = 3;
+		  break;
+
+	  case 3: // Press a, s, d, x
+		  if (RxBuffer[0] == 'a')
+		  {
+			  Hz += 1 ;
+			  Past_Hz += 1;
+			  sprintf((char*)box,"Hz = %d\r\n",Hz);
+			  HAL_UART_Transmit_IT(&huart2,box, strlen((char*)box));
+			  State = 3;
+			  RxBuffer[0] = 0;
+
+		  }
+
+		  else if (RxBuffer[0] == 's')
+		  {
+			  Hz -= 1;
+
+			  if (Hz <= 0)
+			  {
+				  Hz = 0;
+			  }
+
+			  Past_Hz -= 1;
+
+			  if (Past_Hz <= 0)
+			  {
+				  Past_Hz = 0;
+			  }
+			  sprintf((char*)box,"Hz = %d\r\n",Hz);
+			  HAL_UART_Transmit_IT(&huart2,box, strlen((char*)box));
+			  State = 3;
+			  RxBuffer[0] = 0;
+
+		  }
+
+		  else if (RxBuffer[0] == 'd')
+		  {
+			 if(Status_LED)
+			 {
+				Status_LED = 0;
+				RxBuffer[0] = 0;
+
+				Hz = 0;
+				HAL_UART_Transmit_IT(&huart2, LED_Off, strlen((char*) LED_Off));
+				HAL_GPIO_WritePin(LD2_GPIO_Port, LD2_Pin, SET);
+			 }
+			else
+			{
+				Status_LED = 1;
+				RxBuffer[0] = 0;
+
+				Hz = Past_Hz;
+				HAL_UART_Transmit_IT(&huart2, LED_On, strlen((char*) LED_On));
+			}
+		  }
+
+		  else if (RxBuffer[0] == 'x') // back
+		  {
+			  RxBuffer[0] = 0;
+			  State = 0;
+		  }
+		  break;
+
+	  case 4:
+		  HAL_Delay(5);
+		  HAL_UART_Transmit_IT(&huart2, ThirdMenu, strlen((char*) ThirdMenu));
+		  State = 5;
+		  break;
+
+	  case 5:
+		  Button = HAL_GPIO_ReadPin(GPIOC, GPIO_PIN_13);
+		  if (Button == 1 && PastButton == 0)
+		  {
+			  HAL_UART_Transmit_IT(&huart2, UnPress, strlen((char*) UnPress));
+			  OnePress = 0;
+		  }
+		  else if (Button == 0 && PastButton == 0)
+		  {
+			  if (!OnePress)
+			  {
+				  HAL_UART_Transmit_IT(&huart2, Press, strlen((char*) Press));
+				  OnePress = 1;
+			  }
+		  }
+		  else if (RxBuffer[0] == 'x')
+		  {
+			  RxBuffer[0] = 0;
+			  State = 0;
+		  }
+
+		  PastButton = Button;
+		  break;
+	  }
+
   }
   /* USER CODE END 3 */
 }
@@ -230,6 +421,28 @@ static void MX_GPIO_Init(void)
 }
 
 /* USER CODE BEGIN 4 */
+
+void UARTInterruptConfig() {
+	HAL_UART_Receive_IT(&huart2, RxBuffer, 1);
+}
+
+void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
+{
+	if (huart == &huart2)
+	{
+
+		//(for string only) Add string stop symbol \0 to end string
+		RxBuffer[2] = '\0';
+
+		//return received char
+		sprintf((char*)TxBuffer, "Received : %s\r\n" ,RxBuffer);
+		//HAL_UART_Transmit_IT(&huart2, TxBuffer, strlen((char*)TxBuffer));
+
+		HAL_UART_Receive_IT(&huart2, RxBuffer, 1);
+
+	}
+}
+
 
 /* USER CODE END 4 */
 
