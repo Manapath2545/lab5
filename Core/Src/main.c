@@ -21,7 +21,8 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-
+#include "stdio.h"
+#include "string.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -42,6 +43,20 @@
 UART_HandleTypeDef huart2;
 
 /* USER CODE BEGIN PV */
+uint8_t RxBuffer[1];
+uint8_t TxBuffer[40];
+
+uint8_t Start_Menu [500] =
+
+		"			( >_______________________________< )           \n"
+		"			Welcome to start menu of this program			\n"
+		"		You can only select one choice from the menu have   \n"
+		"		Quickly to Select command to go to next menu		\n"
+		"___________________________________________________________\n"
+		"					0 = LED CONTROL							\n"
+		"					1 = VELOCITY CONTROL					\n";
+
+
 
 /* USER CODE END PV */
 
@@ -164,7 +179,7 @@ static void MX_USART2_UART_Init(void)
 
   /* USER CODE END USART2_Init 1 */
   huart2.Instance = USART2;
-  huart2.Init.BaudRate = 115200;
+  huart2.Init.BaudRate = 57600;
   huart2.Init.WordLength = UART_WORDLENGTH_8B;
   huart2.Init.StopBits = UART_STOPBITS_1;
   huart2.Init.Parity = UART_PARITY_NONE;
